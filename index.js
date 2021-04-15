@@ -9,6 +9,7 @@ import {
   EditTwoTone,
   DeleteTwoTone,
   SnippetsTwoTone,
+  PlusCircleTwoTone,
   FileExcelOutlined,
   DownloadOutlined,
   QuestionCircleTwoTone,
@@ -294,7 +295,7 @@ class LocalizedModalAlert extends React.Component {
     return (
       <>
         <Button type="primary" onClick={this.showModal}>
-          Добавить оповещение
+          Добавить Контакт
         </Button>
         <Modal
           title="Добавление нового оповещения"
@@ -680,8 +681,28 @@ ReactDOM.render(
           )}
           />
           <Column title="e-mail/Телефон" dataIndex="email" key="email" />
+
+          <Column 
+            title={
+              <Tooltip placement="top" title={'Для добавления новой рассылки на указанный e-mail нажмите на "+". В ячейке отображены все добавленные рассылки. Для редактирования рассылки кликните по её названию. Для удаления рассылки нажмите на "х"'}>
+              Рассылка<br/>ведомостей<QuestionCircleTwoTone />
+              </Tooltip>
+            }
+            dataIndex="mailing"
+            key="mailing"
+               render={(text, record) => (
+            <Space size="middle">
+              <Button shape shape="circle" onClick={showConfirm} icon={<PlusCircleTwoTone twoToneColor="#52c41a" />} />
+            </Space>
+          )}
+          />
+
           <Column
-            title="События"
+            title={
+              <Tooltip placement="top" title={'События, добавленные для отправки на указанный адрес/телефон'}>
+              События<QuestionCircleTwoTone />
+              </Tooltip>
+            }
             dataIndex="tags"
             key="tags"
             render={tags => (
@@ -694,24 +715,29 @@ ReactDOM.render(
             </>
             )}
           />
+          
           <Column 
             title={
               
               <Tooltip placement="top" title={'Количество сообщений, приходящих на почту/мобильный телефон при срабатывании события'}>
-        Подряд<QuestionCircleTwoTone />
-      </Tooltip>
+              Подряд<QuestionCircleTwoTone />
+              </Tooltip>
             }
             dataIndex="messages"
             key="messages" 
           
           />
           <Column
-            title="Экспорт"
+            title={
+              <Tooltip placement="top" title={'Формирование .xls файла с соответствием номеров точек учёта добавленных им оповецаниям'}>
+              Экспорт<QuestionCircleTwoTone />
+              </Tooltip>
+            }
             key="action"
             render={(text, record) => (
               <Space size="middle">
-                <SnippetsTwoTone />
-                <FileExcelOutlined />
+                {/* <SnippetsTwoTone />
+                <FileExcelOutlined /> */}
                 <Button type="primary" shape="circle" icon={<DownloadOutlined />} />
               </Space>
             )}
