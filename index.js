@@ -15,6 +15,9 @@ import {
   QuestionCircleTwoTone,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
+import { sortableContainer, sortableElement, sortableHandle } from 'react-sortable-hoc';
+import { MenuOutlined } from '@ant-design/icons';
+import arrayMove from 'array-move';
 
 const App = () => (
   <Radio.Group name="radiogroup" defaultValue={1}>
@@ -52,67 +55,6 @@ const options = [
 ];
 
 
-const data = [
-  {
-    key: '1',
-    info: 'Меню сайта',
-    discr: <Button type="link">Настроить отображение пунктов меню</Button>,
-    
-  },
-  {
-    key: '2',
-    info: 'Личный кабинет',
-    discr: 'Показывать сообщения о новых событиях при входе в личный кабинет',
-    action: <Checkbox onChange={onChange}></Checkbox>,
-  },
-   {
-    key: '3',
-    info: '',
-    discr: 'Страница входа',
-    action:
-      <Cascader
-        defaultValue={['vedomosti']}
-        options={options}
-        onChange={onChange}
-      />,
-    
-  },
-  {
-    key: '4',
-    info: 'Отчёт по связи',
-    discr: 'Показывать адрес вместо наименования',
-    action: <Checkbox onChange={onChange}></Checkbox>,
-    
-  },
-  {
-    key: '5',
-    info: '',
-    discr: 'Показывать статистику по группам',
-    action: <Checkbox onChange={onChange}></Checkbox>,
-   
-  },
-  {
-    key: '6',
-    info: 'Ведомости',
-    discr: 'Сортиовка групп и абонентов',
-    action: <App />,
-   
-  },
-  {
-    key: '7',
-    info: '',
-    discr: 'Формировать ведомости в формате PDF',
-    action: <Checkbox onChange={onChange}></Checkbox>,
-   
-  },
-  {
-    key: '8',
-    info: '',
-    discr: 'Формировать ведомости в одной книге EXCEL',
-    action: <Checkbox onChange={onChange}></Checkbox>,
-   
-  },
-];
 
 //наполнение таблицы на вкладке Оповещения
 
@@ -274,7 +216,7 @@ const dataAddAlert = [
   
 ];
 
-//Модальное окно добавления нового оповещения
+//Модальное окно добавления нового контакта для оповещения
 
 class LocalizedModalAlert extends React.Component {
   state = { visible: false };
@@ -298,7 +240,7 @@ class LocalizedModalAlert extends React.Component {
           Добавить Контакт
         </Button>
         <Modal
-          title="Добавление нового оповещения"
+          title="Добавление нового контакта"
           visible={this.state.visible}
           onOk={this.hideModal}
           onCancel={this.hideModal}
@@ -405,12 +347,20 @@ class LocalizedModalReport extends React.Component {
     });
   };
 
+  //Модальное окно добавления рассылки
   render() {
     return (
       <>
+        {/* 
+        //Ранее рассылка добавлялась по кнопке под таблицей
         <Button type="primary" onClick={this.showModal}>
           Добавить рассылку
-        </Button>
+        </Button> */}
+
+        <Button shape="circle"
+          onClick={this.showModal}
+          icon={<PlusCircleTwoTone twoToneColor="#52c41a" />}
+        />
         <Modal
           title="Добавление рассылки ведомостей"
           visible={this.state.visible}
@@ -523,6 +473,237 @@ class LocalizedModalReport extends React.Component {
     );
   }
 }
+
+//Наполнение модального окна настройки пунктов меню
+const DragHandle = sortableHandle(() => (
+  <MenuOutlined style={{ cursor: 'pointer', color: '#999' }} />
+));
+
+const columnsMenu = [
+  {
+    title: 'Sort',
+    dataIndex: 'sort',
+    width: 57,
+    className: 'drag-visible',
+    render: () => <DragHandle />,
+  },
+  {
+    title: 'Разделы',
+    dataIndex: 'name',
+    //width: 80,
+    className: 'drag-visible',
+  },
+ //{
+   // title: 'Action',
+    //dataIndex: 'Action',
+  //},
+
+];
+
+const dataMenu = [
+  {
+    key: '1',
+    name: <Checkbox defaultChecked disabled>Ведомости</Checkbox>,
+    index: 0,
+  },
+  {
+    key: '2',
+    name: <Checkbox defaultChecked disabled>Настройки</Checkbox>,
+    index: 1,
+  },
+  {
+    key: '3',
+    name: <Checkbox onChange={onChange}>Графики</Checkbox>,
+    index: 2,
+  },
+  {
+    key: '4',
+    name: <Checkbox onChange={onChange}>Кадр</Checkbox>,
+    index: 3,
+  },
+  {
+    key: '5',
+    name: <Checkbox onChange={onChange}>Мнемосхемы</Checkbox>,
+    index: 4,
+  },
+];
+
+const rowSelection = {
+  onChange: (selectedRowKeys, selectedRows) => {
+    console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
+  },
+  getCheckboxProps: (record) => ({
+    disabled: record.key == 2,
+    // Column configuration not to be checked
+    key: record.key,
+  }),
+   
+};
+
+const SortableItem = sortableElement(props => <tr {...props} />);
+const SortableContainer = sortableContainer(props => <tbody {...props} />);
+
+
+//класс сортируемой таблицы с пунктами меню
+class SortableTable extends React.Component {
+  state = {
+    dataSource: dataMenu,
+  };
+
+  onSortEnd = ({ oldIndex, newIndex }) => {
+    const { dataSource } = this.state;
+    if (oldIndex !== newIndex) {
+      const newData = arrayMove([].concat(dataSource), oldIndex, newIndex).filter(el => !!el);
+      console.log('Sorted items: ', newData);
+      this.setState({ dataSource: newData });
+    }
+  };
+
+  DraggableContainer = props => (
+    <SortableContainer
+      useDragHandle
+      disableAutoscroll
+      helperClass="row-dragging"
+      onSortEnd={this.onSortEnd}
+      {...props}
+    />
+  );
+
+  DraggableBodyRow = ({ className, style, ...restProps }) => {
+    const { dataSource } = this.state;
+    // function findIndex base on Table rowKey props and should always be a right array index
+    const index = dataSource.findIndex(x => x.index === restProps['data-row-key']);
+    return <SortableItem index={index} {...restProps} />;
+  };
+
+  render() {
+    const { dataSource } = this.state;
+
+    return (
+      <Table
+              
+        dataSource={dataSource}
+        columns={columnsMenu}
+        rowKey="index"
+        components={{
+          body: {
+            wrapper: this.DraggableContainer,
+            row: this.DraggableBodyRow,
+          },
+        }}
+         rowSelection={{
+          type: Checkbox,
+          ...rowSelection,
+        }}
+        scroll={{ y: 240 }}
+      />
+    );
+  }
+}
+
+//Модальное окно настройки пунктов меню
+class LocalizedModalMenuSet extends React.Component {
+  state = { visible: false };
+
+  showModal = () => {
+    this.setState({
+      visible: true,
+    });
+  };
+
+  hideModal = () => {
+    this.setState({
+      visible: false,
+    });
+  };
+
+  //Наполнение окна редактирования отображения пунктов меню
+  render() {
+    return (
+      <>
+        <Button shape="circle"
+          onClick={this.showModal}
+          icon={<EditTwoTone />}
+        />
+        <Modal
+          title="Настройка меню"
+          visible={this.state.visible}
+          onOk={this.hideModal}
+          onCancel={this.hideModal}
+          okText="Применить"
+          cancelText="Отмена"
+        >
+        <SortableTable />     
+            
+        </Modal>
+      </>
+    );
+  }
+}
+const data = [
+  {
+    key: '1',
+    info: 'Меню сайта',
+    discr: 'Настроить отображение пунктов меню',
+    // <Button type="link">Настроить отображение пунктов меню</Button>,
+    action: <LocalizedModalMenuSet />,
+    // <Button shape="circle" icon={<EditTwoTone />} />
+    
+  },
+  {
+    key: '2',
+    info: 'Личный кабинет',
+    discr: 'Показывать сообщения о новых событиях при входе в личный кабинет',
+    action: <Checkbox onChange={onChange}></Checkbox>,
+  },
+   {
+    key: '3',
+    info: '',
+    discr: 'Страница входа',
+    action:
+      <Cascader
+        defaultValue={['vedomosti']}
+        options={options}
+        onChange={onChange}
+      />,
+    
+  },
+  {
+    key: '4',
+    info: 'Отчёт по связи',
+    discr: 'Показывать адрес вместо наименования',
+    action: <Checkbox onChange={onChange}></Checkbox>,
+    
+  },
+  {
+    key: '5',
+    info: '',
+    discr: 'Показывать статистику по группам',
+    action: <Checkbox onChange={onChange}></Checkbox>,
+   
+  },
+  {
+    key: '6',
+    info: 'Ведомости',
+    discr: 'Сортиовка групп и абонентов',
+    action: <App />,
+   
+  },
+  {
+    key: '7',
+    info: '',
+    discr: 'Формировать ведомости в формате PDF',
+    action: <Checkbox onChange={onChange}></Checkbox>,
+   
+  },
+  {
+    key: '8',
+    info: '',
+    discr: 'Формировать ведомости в одной книге EXCEL',
+    action: <Checkbox onChange={onChange}></Checkbox>,
+   
+  },
+];
 
 
 //форма изменения пароля
@@ -692,7 +873,12 @@ ReactDOM.render(
             key="mailing"
                render={(text, record) => (
             <Space size="middle">
-              <Button shape shape="circle" onClick={showConfirm} icon={<PlusCircleTwoTone twoToneColor="#52c41a" />} />
+              <LocalizedModalReport />
+              {/* <Button shape shape="circle" 
+                onClick={showConfirm}
+                //onClick={LocalizedModalReport}
+                icon={<PlusCircleTwoTone twoToneColor="#52c41a" />}
+              /> */}
             </Space>
           )}
           />
@@ -745,12 +931,15 @@ ReactDOM.render(
         </ColumnGroup>
        
     
-  </Table>
+      </Table>
   
-  <LocalizedModalAlert />
+      <LocalizedModalAlert />
   
-  <LocalizedModalReport />
+      {/* Ранее здесь была кнопка добавления новой рассылки
+      <LocalizedModalReport /> */}
+
     </TabPane>
+
     <TabPane tab="Отображение на сайте" key="1">
       <Table dataSource={data}>
         <Column 
